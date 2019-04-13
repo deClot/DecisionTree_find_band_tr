@@ -58,11 +58,15 @@ def clear_res_file(file_name):
 
 
 from keras.models import Model
-from keras.layers import Dense, Input, LSTM
+from keras.layers import Dense, Input, LSTM, Dropout
 
 def model(input_shape, Ty):
+    Tx = input_shape.shape[0]
     i = Input(shape=input_shape, dtype='float32')
-    X = LSTM(32, return_sequences=False)(i)
+    #X = LSTM(16, return_sequences=True)(i)
+    #input_shape=(, Tx, n_a*2)
+    X = Bidirectional(LSTM(16, return_sequences=False))(i)
+    #X = LSTM(16, return_sequences=False)(i)
     X = Dense(Ty, activation='sigmoid')(X)
     model = Model(inputs=[i], outputs=X)
     
@@ -90,7 +94,7 @@ def calculate_RES_for_band_centers(band_centers):
         
         os.rename('TRANS.RES', 'TRANS_'+band_centers_ini[band_centers.index(center)]+'.RES')
     
-def make_asym_search(peak_file, quan_num):
+def make_asym_search(peak_file, quan_num, max_counter):
     '''Create correct ASYM file and run ASYM and SEARCh exes to get search''' 
 
     file_asym = open('ASYM', 'r')
@@ -108,7 +112,7 @@ def make_asym_search(peak_file, quan_num):
     file_asym = open('ASYM', 'w')
     file_asym.write(line)
 
-    make_asym(file_asym, *quan_num)
+    make_asym(file_asym, *quan_num, max_counter = max_counter)
     file_asym.close()
 
     #!wine ASYM.EXE
@@ -118,7 +122,8 @@ def make_asym_search(peak_file, quan_num):
 
     
 def make_asym(file_asym, J, Ka, Kc,max_counter=6, v=1):
-    '''Write (in already opened ASYM file) seria from max_counter elements for giver quantum nubers'''
+    '''Write (in already opened ASYM file) seria from max_counter elements for giver quantum nubers
+    file_asym, J, Ka, Kc,max_counter=6, v=1'''
     file_res = open('TRANS.RES', 'r')
 
     counter = 0
@@ -133,9 +138,43 @@ def make_asym(file_asym, J, Ka, Kc,max_counter=6, v=1):
             if counter > max_counter:
                 break
 
-            file_asym.write ('%s%s' %(line[:10], line[11:]))
+            file_asym.write ('%s' %(line))
             J = J + 1
             Kc = Kc + 1
 
     file_res.close()
     file_asym.close()
+
+
+def deltas_in_search(file_name = 'search'):
+    file_search = open(file_name, 'r')
+
+    count = 0
+    for line in file_search:
+        count +=1
+        if count == 5:
+            break
+        continue
+
+    deltas = {}
+
+    for line in file_search:
+        if line.find('Searching') != -1:
+            J0 = int(line.split()[1])
+            deltas[J0] = []
+            E0 = float(line.split()[-1])
+            continue
+
+        if line.find('No') != -1 or \
+           len(line.split()) == 0 or \
+           int(line.split()[0]) != int(J0) - 1:
+            continue
+
+        try:
+            E = float(line.split()[-1])
+            delta = round(E - E0, 3)
+            deltas[J0].append(delta)
+        except ValueError:
+            break
+            
+    return deltas
