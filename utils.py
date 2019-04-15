@@ -72,6 +72,7 @@ def model(input_shape, Ty):
     
     return model
 
+import os
 
 def calculate_RES_for_band_centers(band_centers):
     '''Change value of band center ind DAT file and wait for running TRANS.EXE. After, change name of RES file for corresponding band center'''
@@ -119,7 +120,6 @@ def make_asym_search(peak_file, quan_num, max_counter):
     #!wine SEARCH.exe
     subprocess.run(["wine", "ASYM.EXE"])
     subprocess.run(["wine", "SEARCH.EXE"])
-
     
 def make_asym(file_asym, J, Ka, Kc,max_counter=6, v=1):
     '''Write (in already opened ASYM file) seria from max_counter elements for giver quantum nubers
