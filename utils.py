@@ -57,19 +57,24 @@ def clear_res_file(file_name):
         F.writelines(file_out)
 
 
-from keras.models import Model
-from keras.layers import Dense, Input, LSTM, Dropout
+from keras.models import Model, Sequential
+from keras.layers import Dense, Input, GRU, LSTM
+from keras.optimizers import Adam
 
-def model(input_shape, Ty):
-    Tx = input_shape.shape[0]
+def model_GRU(input_shape, Ty, hidden_size):
     i = Input(shape=input_shape, dtype='float32')
-    #X = LSTM(16, return_sequences=True)(i)
-    #input_shape=(, Tx, n_a*2)
-    X = Bidirectional(LSTM(16, return_sequences=False))(i)
-    #X = LSTM(16, return_sequences=False)(i)
+    X = GRU(hidden_size, return_sequences=False)(i)
+    
     X = Dense(Ty, activation='sigmoid')(X)
     model = Model(inputs=[i], outputs=X)
     
+    return model
+  
+def model_LSTM(hidden_size):  
+    model = Sequential()
+    model.add(LSTM(hidden_size, return_sequences=False))
+    model.add(Dense(units=1, activation='sigmoid'))
+  
     return model
 
 import os
