@@ -183,3 +183,72 @@ def deltas_in_search(file_name = 'search'):
             break
             
     return deltas
+
+
+def find_upper(J0, Ka0, Kc0, path, band_name):
+    file_res = open(path+'res_'+band_name+'.res')
+    
+    for line in file_res:
+        line = line.replace('J=', '').split()
+        
+        if [J0,Ka0,Kc0] == line[3:6]:
+            E = float(line[-1])
+            file_res.close()
+            return E
+
+def make_sequences_y1(file_name, path, band_name):
+    file = open(path + file_name, 'r')
+    
+    sequence = []
+    data_1 = []
+    flag = False
+
+    for line in file: 
+        if line.find('New') != -1:
+            if len(sequence) != 0:
+                #print(sequence)
+                data_1.append(sequence)
+            sequence = []
+            continue
+        if line.find('Searching') != -1:
+            flag = False
+            J0, Ka0, Kc0, = line.split()[1], line.split()[2], line.split()[3]
+            E0 = find_upper(J0, Ka0, Kc0, path, band_name)
+            continue
+
+        if flag == True or line.find('No') != -1 or len(line.split()) == 0:
+            continue
+
+        try:
+            E = float(line[:78].split()[-1])
+            delta = E - E0
+            flag = True
+            sequence.append(delta)
+        except ValueError:
+            break
+    return data_1
+
+import numpy as np
+
+def get_sequence_sample(sequence, window_size=1):
+    values = sequence.copy()
+    
+    for i in range(window_size-1):
+        column = np.roll(sequence, -(i + 1), axis=0)
+        values = np.hstack((values, column))
+    values = values[:-window_size]
+    
+    return values
+
+def get_x(data, window_size=1):
+    X = np.zeros((1, window_size))
+    for i in range(len(data)):
+      sequences_1 = np.asarray(data[i])
+      sequences_1 = np.expand_dims(sequences_1, axis=1)
+
+      X_i = get_sequence_sample(sequences_1, window_size=window_size)
+      X = np.vstack((X, X_i))
+      
+    labels = np.ones((X.shape[0], 1))
+    X = np.hstack((X, labels))
+    return X[1:]
