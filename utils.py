@@ -249,6 +249,6 @@ def get_x(data, window_size=1):
       X_i = get_sequence_sample(sequences_1, window_size=window_size)
       X = np.vstack((X, X_i))
       
-    labels = np.ones((X.shape[0], 1))
-    X = np.hstack((X, labels))
+    #labels = np.ones((X.shape[0], 1))
+    #X = np.hstack((X, labels))
     return X[1:]
